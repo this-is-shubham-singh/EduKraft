@@ -10,7 +10,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendMail = async ({ email, subject, body }) => {
+const sendMail = async (email, subject, body) => {
   try {
     const info = await transporter.sendMail({
       from: `"EDUKRAFT" <${process.env.SENDER_EMAIL_ID}>`,
