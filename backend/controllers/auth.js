@@ -122,14 +122,67 @@ const verifyEmail = async (req, res) => {
 };
 
 // login
-const login = async () => {
+const login = async (req, res) => {
   try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.json({
+        success: false,
+        message: "invalid data",
+      });
+    }
+
+    // find if user doesnt exist
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.json({
+        success: false,
+        message: "invalid user",
+      });
+    }
+
+    // password comparison
+    const response = await bcrypt.compare(password, user.password);
+    if (!response) {
+      return res.json({
+        success: false,
+        message: "invalid email id or incorrect password",
+      });
+    }
+
+    // creating jwt token
+    const payload = {
+      id: user._id,
+      email: user.email,
+      accountType: user.accountType,
+    };
+    const token = await jwt.sign(payload, process.env.SECRET_KEY, {
+      expiresIn: "7d",
+    });
+
+    // create cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.ENVIRONMENT === "production",
+      sameSite: process.env.ENVIRONMENT === "production" ? "strict" : "Lax",
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
+
+    return res.json({
+      success: true,
+      message: "user logged in ",
+    });
   } catch (e) {
-    return res.json({});
+    return res.json({ success: false, message: e.message });
   }
 };
 
 // change password
-const changePassword = async () => {};
+const changePassword = async () => {
+  try {
+    const { id } = req.body;
+  } catch (e) {}
+};
 
 export { signup, signup, verifyEmail, login, changePassword };
