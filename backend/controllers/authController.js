@@ -4,7 +4,6 @@ import sendMail from "../utils/mailSender.js";
 import TempVerifyEmail from "../models/tempVerifyEmail.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import tempVerifyEmailModel from "../models/tempVerifyEmail.js";
 
 // signup
 const signup = async (req, res) => {
@@ -101,6 +100,14 @@ const verifyEmail = async (req, res) => {
       return res.json({ success: false, message: "invalid otp" });
     }
 
+    // creating addtional details object with null data
+    const additionalDetails = {
+      dob: null,
+      about: null,
+      contactNumber: null,
+      gender: null,
+    };
+
     // set data to user and delete from tempVerifyEmailModel
     await User.create({
       firstName: user.firstName,
@@ -108,8 +115,11 @@ const verifyEmail = async (req, res) => {
       email: user.email,
       password: user.password,
       accountType: user.accountType,
+      additionalDetails,
+      image: `https://api.dicebear.com/7.x/initials/svg?seed=${user.firstName}${user.lastName}&backgroundColor=ffcc00&radius=50`,
     });
 
+    // deleting temprory data from tempverifyemail model
     const response = await TempVerifyEmail.findByIdAndDelete(user._id);
 
     return res.status(200).json({
@@ -181,8 +191,46 @@ const login = async (req, res) => {
 // change password
 const changePassword = async () => {
   try {
-    const { id } = req.body;
-  } catch (e) {}
+    const { id } = req.user;
+    if (!id) {
+      return res
+        .status(400)
+        .json({ success: false, message: "unauthorized user" });
+    }
+
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({ success: false, message: "invalid data" });
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res
+        .status(401)
+        .json({ success: false, message: "unauthorized User" });
+    }
+
+    const comparison = await bcrypt.compare(oldPassword, user.password);
+    if (!comparison) {
+      return res.json({ success: false, message: "incorrect old password" });
+    }
+
+    if (newPassword != confirmPassword) {
+      return res.json({ success: false, message: "New password and confirm password do not match" });
+    }
+
+    const hashedPass = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPass;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "password changed successfully",
+    });
+  } catch (e) {
+    return res.json({ success: false, message: e.message });
+  }
 };
 
 export { signup, signup, verifyEmail, login, changePassword };
