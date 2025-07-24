@@ -4,6 +4,7 @@ import sendMail from "../utils/mailSender.js";
 import TempVerifyEmail from "../models/tempVerifyEmail.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import tempVerifyEmailModel from "../models/tempVerifyEmail.js";
 
 // signup
 const signup = async (req, res) => {
@@ -24,7 +25,7 @@ const signup = async (req, res) => {
       !email ||
       !createPassword ||
       !confirmPassword ||
-      accountType
+      !accountType
     ) {
       return res.json({ success: false, message: "enter all data" });
     }
@@ -32,7 +33,10 @@ const signup = async (req, res) => {
     // check if user already exist
     const user = await User.findOne({ email });
     if (user) {
-      return res.json({ success: false, message: "user already exist" });
+      return res.json({
+        success: false,
+        message: "email already in use or pending verification",
+      });
     }
 
     // compare both passwords
@@ -57,7 +61,7 @@ const signup = async (req, res) => {
       password: hashedPass,
       accountType,
       otp,
-      otpExpiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      otpExpiresAt: Date.now() + 5 * 60 * 1000,
     });
 
     // send mail with otp
@@ -67,7 +71,7 @@ const signup = async (req, res) => {
       `<h2>Your email verification otp is ${otp}</h2>`
     );
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       message: "verify otp sent to mail",
       email: newUser.email,
@@ -85,14 +89,45 @@ const verifyEmail = async (req, res) => {
       return res.json({ success: false, message: "invalid data" });
     }
 
-    TempVerifyEmail.findOne({ email });
+    // extract saved otp and compare
+    const user = await TempVerifyEmail.findOne({ email });
+    if (!user) {
+      return res.json({ success: false, message: "user doesn't exist" });
+    }
+
+    if (user.otpExpiresAt < Date.now()) {
+      return res.json({ success: false, message: "otp expired" });
+    } else if (user.otp !== otp) {
+      return res.json({ success: false, message: "invalid otp" });
+    }
+
+    // set data to user and delete from tempVerifyEmailModel
+    await User.create({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      password: user.password,
+      accountType: user.accountType,
+    });
+
+    const response = await TempVerifyEmail.findByIdAndDelete(user._id);
+
+    return res.status(200).json({
+      success: true,
+      message: "email verified",
+    });
   } catch (e) {
     return res.json({ success: false, message: e.message });
   }
 };
 
 // login
-const login = async () => {};
+const login = async () => {
+  try {
+  } catch (e) {
+    return res.json({});
+  }
+};
 
 // change password
 const changePassword = async () => {};

@@ -29,9 +29,8 @@ const tempVerifyEmailSchema = new mongoose.Schema({
   },
   otp: { type: Number, required: true },
   otpExpiresAt: {
-    type: Date,
+    type: Number,
     required: true,
-    index: { expires: 0 }, // use this to automatically delete data after expiry time, becuase what if user never verifies, this crutial data stays on your db and also keep bundling up
   },
 });
 
