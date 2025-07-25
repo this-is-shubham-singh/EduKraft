@@ -32,7 +32,7 @@ const resetPassword = async (req, res) => {
     await sendMail(
       email,
       "Reset Password",
-      `<a href="${process.env.FRONTEND_BASELINK}reset/${newResetToken}" target="_blank" style="color: #007bff; text-decoration: none;">
+      `<a href="${process.env.FRONTEND_BASELINK}reset-password/${newResetToken}" target="_blank" style="color: #007bff; text-decoration: none;">
           Click here to reset your password
       </a>`
     );

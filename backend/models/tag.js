@@ -8,6 +8,12 @@ const tagsSchema = new mongoose.Schema({
   description: {
     type: String,
   },
+  courseId: [ // multiple courses can have same tag
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Course",
+    },
+  ],
 });
 
 const tagsModel = mongoose.models.Tag || mongoose.model("Tag", tagsSchema);
