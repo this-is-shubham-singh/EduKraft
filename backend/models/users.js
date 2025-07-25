@@ -43,6 +43,13 @@ const usersSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "CourseProgress",
   },
+  resetToken: {
+    type: String,
+    trim: true,
+  },
+  resetTokenExpiry: {
+    type: Date,
+  },
 });
 
 const userModel = mongoose.models.User || mongoose.model("User", usersSchema);

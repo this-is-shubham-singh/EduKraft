@@ -216,7 +216,10 @@ const changePassword = async () => {
     }
 
     if (newPassword != confirmPassword) {
-      return res.json({ success: false, message: "New password and confirm password do not match" });
+      return res.json({
+        success: false,
+        message: "New password and confirm password do not match",
+      });
     }
 
     const hashedPass = await bcrypt.hash(newPassword, 10);
