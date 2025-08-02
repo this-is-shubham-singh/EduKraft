@@ -31,10 +31,10 @@ const usersSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
-  courses: {
+  courses: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "Courses",
-  },
+  }],
   additionalDetails: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Profile",
